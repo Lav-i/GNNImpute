@@ -1,7 +1,9 @@
 # %%
 import os
-import numpy as np
+import sys
+import codecs
 import scanpy as sc
+sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 
 # %%
 

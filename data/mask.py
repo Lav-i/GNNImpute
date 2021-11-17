@@ -7,6 +7,7 @@ import scanpy as sc
 from scipy import sparse
 from warnings import simplefilter
 
+sys.path.append('./')
 from utils.Common import maskPerCol
 
 simplefilter(action='ignore', category=FutureWarning)

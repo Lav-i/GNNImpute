@@ -3,6 +3,7 @@ import os
 import json
 import time
 import glob
+import pandas as pd
 import scanpy as sc
 import networkx as nx
 from scipy import sparse
@@ -21,7 +22,7 @@ from collections import namedtuple
 from model import GNNImpute
 from utils.Common import *
 
-torch.cuda.set_device(0)
+# torch.cuda.set_device(0)
 
 # %%
 
@@ -211,12 +212,12 @@ def test_wrapper():
         }
 
     return {
-        **clus,
-        'mse': float('%.4f' % mse),
-        'mae': float('%.4f' % mae),
-        'pearsonr': float('%.4f' % pearsonr),
-        'cosine_similarity': float('%.4f' % cosine_similarity)
-    }
+               **clus,
+               'mse': float('%.4f' % mse),
+               'mae': float('%.4f' % mae),
+               'pearsonr': float('%.4f' % pearsonr),
+               'cosine_similarity': float('%.4f' % cosine_similarity)
+           }, pred.detach().cpu().numpy()
 
 
 # %%
@@ -258,7 +259,18 @@ print('Total time elapsed: {:.4f}s'.format(time.time() - t_total))
 model.load_state_dict(torch.load('{}.pkl'.format(best_epoch)))
 
 # Testing
-result = test_wrapper()
+result, imputedData = test_wrapper()
+
+path = './data/%s/imputed' % args.dataset
+
+if not os.path.exists(path):
+    os.makedirs(path)
+
+pd.DataFrame(imputedData, index=adata.obs.index, columns=adata.var.index) \
+    .T.to_csv(path + '/%s_%s.csv' % (args.dataset, str(args.masked_prob).replace('.', '')))
+
+adata.X = sparse.csr_matrix(imputedData)
+adata.write(path + '/%s_%s.h5ad' % (args.dataset, str(args.masked_prob).replace('.', '')))
 
 print(json.dumps({
     'layer': args.layer,
