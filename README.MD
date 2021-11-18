@@ -19,7 +19,12 @@ pip install -r requirements.txt
 
 ### Option 2: Use docker
 
-TODO
+Build from Dockerfile or download docker image from docker hub.
+```shell script
+docker pull razzil/gnnimpute:1.0
+docker run --rm -it razzil/gnnimpute:1.0
+```
+The benchmark data set has been provided in the docker image.
 
 ## Prepare data
 
@@ -60,7 +65,7 @@ Process PBMC data set into standard format.
 python ./data/PBMC/preprocess.py
 ```
 
-Output file is the filtered expression matrix, the file format is h5ad.
+Output file (./data/{name}/processed/{name}.h5ad) is the filtered expression matrix, the file format is h5ad.
 
 ### Mask (Get benchmark data)
 
@@ -74,7 +79,7 @@ Mask PBMC data set.
 python ./data/mask.py --masked_prob=0.1 --dataset=PBMC
 ```
 
-Output folder contains the main output file (representing the masked expression matrix) in h5ad and csv formats. And the file in npz format indicates the location of the dropout event.
+Output folder (./data/{name}/masked/) contains the main output file (representing the masked expression matrix) in h5ad and csv formats. And the file in npz format indicates the location of the dropout event.
 
 ## Train
 
@@ -88,5 +93,5 @@ Impute PBMC data set.
 python ./train.py --layer=GATConv --masked_prob=0.1 --heads=3 --dataset=PBMC
 ```
 
-Output folder contains the main output file (representing the imputed expression matrix) in h5ad and csv formats.
+Output folder (./data/{name}/imputed/) contains the main output file (representing the imputed expression matrix) in h5ad and csv formats.
 
