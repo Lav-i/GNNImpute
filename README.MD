@@ -81,17 +81,32 @@ python ./data/mask.py --masked_prob=0.1 --dataset=PBMC
 
 Output folder (./data/{name}/masked/) contains the main output file (representing the masked expression matrix) in h5ad and csv formats. And the file in npz format indicates the location of the dropout event.
 
-## Train
+## Usage
 
-Impute Klein data set.
-```shell script
-python ./train.py --layer=GATConv --masked_prob=0.1 --heads=3 --dataset=Klein
+### Quick Start
+
+```python
+import scanpy as sc
+from GNNImpute.api import GNNImpute
+
+adata = sc.read_h5ad('./data/Klein/masked/Klein_01.h5ad')
+
+adata = GNNImpute(adata=adata,
+                  layer='GATConv',
+                  no_cuda=False,
+                  epochs=3000,
+                  lr=0.001,
+                  weight_decay=0.0005,
+                  hidden=50,
+                  patience=200,
+                  fastmode=False,
+                  heads=3,
+                  use_raw=True,
+                  verbose=True)
 ```
 
-Impute PBMC data set.
-```shell script
-python ./train.py --layer=GATConv --masked_prob=0.1 --heads=3 --dataset=PBMC
-```
+Output variable (adata) contains the main output file (representing the imputed expression matrix) in AnnData format.
 
-Output folder (./data/{name}/imputed/) contains the main output file (representing the imputed expression matrix) in h5ad and csv formats.
+### Tutorials
 
+For more details, please see to [Example File](https://github.com/Lav-i/GNNImpute/blob/main/example/test.py).
