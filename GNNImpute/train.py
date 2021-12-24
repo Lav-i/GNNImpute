@@ -23,7 +23,7 @@ def train(gdata, model,
         model.train()
         optimizer.zero_grad()
 
-        pred = model(gdata.x, gdata.edge_index)
+        pred = model(gdata.x, gdata.edge_index, gdata.size_factors)
 
         dropout_pred = pred[gdata.train_mask]
         dropout_true = gdata.y[gdata.train_mask]
@@ -35,7 +35,7 @@ def train(gdata, model,
 
         if not fastmode:
             model.eval()
-            pred = model(gdata.x, gdata.edge_index)
+            pred = model(gdata.x, gdata.edge_index, gdata.size_factors)
 
         dropout_pred = pred[gdata.val_mask]
         dropout_true = gdata.y[gdata.val_mask]

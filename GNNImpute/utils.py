@@ -1,10 +1,36 @@
 import torch
 import numpy as np
 import networkx as nx
+import scanpy as sc
 
 from torch_geometric.data import Data
 from sklearn.decomposition import PCA
 from sklearn.neighbors import kneighbors_graph
+
+
+def normalize(adata, filter_min_counts=True, size_factors=True, normalize_input=True, logtrans_input=True):
+    if filter_min_counts:
+        sc.pp.filter_genes(adata, min_counts=1)
+        sc.pp.filter_cells(adata, min_counts=1)
+
+    # if size_factors or normalize_input or logtrans_input:
+    #     adata.raw = adata.copy()
+    # else:
+    #     adata.raw = adata
+
+    if size_factors:
+        sc.pp.normalize_per_cell(adata)
+        adata.obs['size_factors'] = adata.obs.n_counts / np.median(adata.obs.n_counts)
+    else:
+        adata.obs['size_factors'] = 1.0
+
+    if logtrans_input:
+        sc.pp.log1p(adata)
+
+    if normalize_input:
+        sc.pp.scale(adata)
+
+    return adata
 
 
 def train_val_split(adata, train_size=0.6, val_size=0.2, test_size=0.2):
@@ -33,7 +59,7 @@ def train_val_split(adata, train_size=0.6, val_size=0.2, test_size=0.2):
 
 def kneighbor(adata, n_components=50, k=5):
     pca = PCA(n_components=n_components)
-    data_pca = pca.fit_transform(adata.X.A)
+    data_pca = pca.fit_transform(adata.X)
 
     A = kneighbors_graph(data_pca, k, mode='connectivity', include_self=False)
     G = nx.from_numpy_matrix(A.todense())
@@ -52,12 +78,13 @@ def adata2gdata(adata, use_raw=True):
     edges = kneighbor(adata, n_components=50, k=5)
 
     edges = torch.tensor(edges, dtype=torch.long)
-    features = torch.tensor(adata.X.A, dtype=torch.float)
-    labels = torch.tensor(adata.X.A, dtype=torch.float)
+    features = torch.tensor(adata.X, dtype=torch.float)
+    labels = torch.tensor(adata.X, dtype=torch.float)
+    size_factors = torch.tensor(adata.obs.size_factors, dtype=torch.float).reshape(-1, 1)
     if use_raw:
         labels = torch.tensor(adata.raw.X.A, dtype=torch.float)
 
-    gdata = Data(x=features, y=labels, edge_index=edges)
+    gdata = Data(x=features, y=labels, edge_index=edges, size_factors=size_factors)
     gdata.train_mask = torch.tensor(adata.obs.idx_train, dtype=torch.bool)
     gdata.val_mask = torch.tensor(adata.obs.idx_val, dtype=torch.bool)
 

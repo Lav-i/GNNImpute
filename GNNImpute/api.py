@@ -1,6 +1,6 @@
 from .model import GNNImpute as Model
 from .train import train
-from .utils import adata2gdata, train_val_split
+from .utils import adata2gdata, train_val_split, normalize
 
 
 def GNNImpute(adata,
@@ -19,13 +19,14 @@ def GNNImpute(adata,
 
     model = Model(input_dim=input_dim, h_dim=512, z_dim=hidden, layerType=layer, heads=heads)
 
+    adata = normalize(adata, filter_min_counts=False)
     adata = train_val_split(adata)
     gdata = adata2gdata(adata, use_raw=use_raw)
 
     train(gdata=gdata, model=model, no_cuda=no_cuda, epochs=epochs, lr=lr, weight_decay=weight_decay,
           patience=patience, fastmode=fastmode, verbose=verbose)
 
-    pred = model(gdata.x, gdata.edge_index)
+    pred = model(gdata.x, gdata.edge_index, gdata.size_factors)
 
     adata.X = pred.detach().cpu()
 

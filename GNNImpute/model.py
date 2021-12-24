@@ -37,7 +37,8 @@ class GNNImpute(torch.nn.Module):
 
         return x
 
-    def forward(self, x, edge_index):
+    def forward(self, x, edge_index, size_factors):
         z = self.encode(x, edge_index)
         x = self.decode(z)
+        x = x * size_factors
         return x
