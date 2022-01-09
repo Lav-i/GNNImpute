@@ -9,11 +9,11 @@ class GNNImpute(torch.nn.Module):
 
         #### Encoder ####
         self.encode_conv1 = layer(layerType, in_channels=input_dim, out_channels=h_dim,
-                                  heads=heads, concat=False, dropout=0.6)
+                                  heads=heads, concat=False)
         self.encode_bn1 = torch.nn.BatchNorm1d(h_dim)
 
         self.encode_conv2 = layer(layerType, in_channels=h_dim, out_channels=z_dim,
-                                  heads=heads, concat=False, dropout=0.6)
+                                  heads=heads, concat=False)
         self.encode_bn2 = torch.nn.BatchNorm1d(z_dim)
 
         #### Decoder ####

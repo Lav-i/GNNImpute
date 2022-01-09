@@ -26,7 +26,7 @@ def GNNImpute(adata,
     train(gdata=gdata, model=model, no_cuda=no_cuda, epochs=epochs, lr=lr, weight_decay=weight_decay,
           patience=patience, fastmode=fastmode, verbose=verbose)
 
-    pred = model(gdata.x, gdata.edge_index, gdata.size_factors)
+    pred = model(gdata['x'], gdata['adj'], gdata['size_factors'])
 
     adata.X = pred.detach().cpu()
 

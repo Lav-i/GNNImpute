@@ -17,16 +17,17 @@ def train(gdata, model,
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     lossFunc = torch.nn.MSELoss(reduction='mean')
-    gdata = gdata.to(device)
+    for key in gdata.keys():
+        gdata[key] = gdata[key].to(device)
 
     def train_wrapper(epoch):
         model.train()
         optimizer.zero_grad()
 
-        pred = model(gdata.x, gdata.edge_index, gdata.size_factors)
+        pred = model(gdata['x'], gdata['adj'], gdata['size_factors'])
 
-        dropout_pred = pred[gdata.train_mask]
-        dropout_true = gdata.y[gdata.train_mask]
+        dropout_pred = pred[gdata['train_mask']]
+        dropout_true = gdata['y'][gdata['train_mask']]
 
         loss_train = lossFunc(dropout_pred, dropout_true)
 
@@ -35,10 +36,10 @@ def train(gdata, model,
 
         if not fastmode:
             model.eval()
-            pred = model(gdata.x, gdata.edge_index, gdata.size_factors)
+            pred = model(gdata['x'], gdata['adj'], gdata['size_factors'])
 
-        dropout_pred = pred[gdata.val_mask]
-        dropout_true = gdata.y[gdata.val_mask]
+        dropout_pred = pred[gdata['val_mask']]
+        dropout_true = gdata['y'][gdata['val_mask']]
 
         loss_val = lossFunc(dropout_pred, dropout_true)
 

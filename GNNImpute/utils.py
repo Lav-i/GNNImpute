@@ -1,9 +1,8 @@
 import torch
 import numpy as np
-import networkx as nx
 import scanpy as sc
+import scipy.sparse as sp
 
-from torch_geometric.data import Data
 from sklearn.decomposition import PCA
 from sklearn.neighbors import kneighbors_graph
 
@@ -57,35 +56,44 @@ def train_val_split(adata, train_size=0.6, val_size=0.2, test_size=0.2):
     return adata
 
 
+def row_normalize(mx):
+    """Row-normalize sparse matrix"""
+
+    rowsum = np.array(mx.sum(1))
+    r_inv = np.power(rowsum, -1).flatten()
+    r_inv[np.isinf(r_inv)] = 0.
+    r_mat_inv = sp.diags(r_inv)
+    mx = r_mat_inv.dot(mx)
+    return mx
+
+
 def kneighbor(adata, n_components=50, k=5):
     pca = PCA(n_components=n_components)
     data_pca = pca.fit_transform(adata.X)
 
-    A = kneighbors_graph(data_pca, k, mode='connectivity', include_self=False)
-    G = nx.from_numpy_matrix(A.todense())
+    A = kneighbors_graph(data_pca, k, mode='connectivity', include_self=True)
 
-    edges = []
-    for (u, v) in G.edges():
-        edges.append([u, v])
-        edges.append([v, u])
-
-    edges = np.array(edges).T
-
-    return edges
+    return row_normalize(A)
 
 
 def adata2gdata(adata, use_raw=True):
-    edges = kneighbor(adata, n_components=50, k=5)
+    adj = kneighbor(adata, n_components=50, k=5)
 
-    edges = torch.tensor(edges, dtype=torch.long)
+    adj = torch.tensor(adj.A, dtype=torch.float)
     features = torch.tensor(adata.X, dtype=torch.float)
     labels = torch.tensor(adata.X, dtype=torch.float)
     size_factors = torch.tensor(adata.obs.size_factors, dtype=torch.float).reshape(-1, 1)
     if use_raw:
         labels = torch.tensor(adata.raw.X.A, dtype=torch.float)
 
-    gdata = Data(x=features, y=labels, edge_index=edges, size_factors=size_factors)
-    gdata.train_mask = torch.tensor(adata.obs.idx_train, dtype=torch.bool)
-    gdata.val_mask = torch.tensor(adata.obs.idx_val, dtype=torch.bool)
+    train_mask = torch.tensor(adata.obs.idx_train, dtype=torch.bool)
+    val_mask = torch.tensor(adata.obs.idx_val, dtype=torch.bool)
 
-    return gdata
+    return {
+        'x': features,
+        'y': labels,
+        'size_factors': size_factors,
+        'adj': adj,
+        'train_mask': train_mask,
+        'val_mask': val_mask
+    }

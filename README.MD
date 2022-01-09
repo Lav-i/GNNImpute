@@ -21,8 +21,8 @@ pip install -r requirements.txt
 
 Build from Dockerfile or download docker image from docker hub.
 ```shell script
-docker pull razzil/gnnimpute:1.0
-docker run --rm -it razzil/gnnimpute:1.0
+docker pull razzil/gnnimpute:v0.1.2
+docker run --gpus all --rm -it razzil/gnnimpute:v0.1.2
 ```
 The benchmark data set has been provided in the docker image.
 
